@@ -11,4 +11,4 @@ add_executable(516_LibreOJ__Round_2DP_ "启发式合并/516_LibreOJ__Round_2DP_.
 add_executable(P3224_HNOI2012_ "启发式合并/P3224_HNOI2012_.cpp")
 add_executable(AT_abc372_e_ABC372E_K_th_Largest_Connected_Components "启发式合并/AT_abc372_e_ABC372E_K_th_Largest_Connected_Components.cpp")
 add_executable(AT_indeednow_2015_quala_3_ "整体二分/AT_indeednow_2015_quala_3_.cpp")
-add_executable(AT_abc226_e_ABC226E_Just_one "AT_abc226_e_ABC226E_Just_one.cpp")
+add_executable(AT_abc226_e_ABC226E_Just_one "图论/基环树/AT_abc226_e_ABC226E_Just_one.cpp")
