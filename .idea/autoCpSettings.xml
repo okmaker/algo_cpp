@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="settings.Project">
+    <option name="fileGenerationRoot">
+      <map>
+        <entry key="Codeforces" value="" />
+        <entry key="LibreOJ" value="" />
+        <entry key="Luogu" value="" />
+      </map>
+    </option>
+  </component>
+</project>
