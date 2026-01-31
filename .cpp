@@ -1,8 +1,28 @@
-//
-// Created by 1 on 2026/1/4.
-//
+//  AcWing contest  区间最大公约数
+//  Created at 16.01.2026 23:03:00 in file .cpp
+//  By zfq
 #include <bits/stdc++.h>
+// #include <bits/extc++.h>
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+
+#define int long long
 using namespace std;
+//using namespace __gnu_pbds;
+//using ordered_set = tree<int, null_type, less<>, rb_tree_tag, tree_order_statistics_node_update>;
+
+using pii = pair<int,int>;
+using v2d = vector<vector<int>>;
+const double eps = 1e-7;
+int dx[] =  {0,0,1,-1};
+int dy[] = {1,-1,0,0};
+const int MOD = 1e9 + 7;
+const int N = 1e5 + 5;
+const int M = 1e5 + 7;
+/*
+    
+*/
 // indexed-0 ,左闭右开区间[l,r)
 namespace atcoder {
 	int ceil_pow2(int n) {
@@ -114,37 +134,58 @@ namespace atcoder {
 		void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
 	};
 
-}
+}  // namespace atcoder
 using namespace atcoder;
-int op(int a, int b) {
-	return max(a,b);
-}
-int e() {
-	return 0;
-}
-class Solution {
-public:
-	vector<bool> getResults(vector<vector<int>>& queries) {
-        int mx = 0;
-		for (auto &q: queries) mx = max(mx, q[1]);
-		segtree<int, op, e> seg(mx+1);
-		seg.set(mx,mx);
-		set<int> st;st.insert(0),st.insert(mx);
-		vector<bool> res;
-		for (auto &q: queries) {
-			int op = q[0];
-			int cur = q[1];
-			int pre = *prev(st.lower_bound(cur));
-			if (op == 1) {
-				int nxt = *st.lower_bound(cur);
-				seg.set(cur,cur - pre);
-				seg.set(nxt,nxt - cur);
-			}else {
-				//两部分  [0,pre]可以直接查，[pre,cur]
-				int v = max(seg.prod(0,pre+1),cur - pre);
-				res.push_back(v >= q[2]);
-			}
-		}
-		return res;
-	}
+struct Node {
+	int s = 0,g = 0;
 };
+Node operator+(Node a, Node b) {
+	return Node{a.s + b.s,gcd(a.g,b.g)};
+}
+auto op(Node a, Node b) {
+	return a + b;
+}
+Node e() {
+	return {0ll,0ll};
+}
+void solve(){
+    int n,m; cin >> n >> m;
+	vector<Node> arr(n);
+	for (int i = 0; i < n; i++) cin >> arr[i].s;
+	for (int i = n - 1; i > 0; i--) arr[i].s -= arr[i - 1].s;
+	for (int i = 0; i < n; i++) arr[i].g = arr[i].s;
+	segtree<Node,op,e> seg(arr);
+	while (m--) {
+		char op; cin >> op;
+		if (op == 'C') {
+			int l,r,d; cin >> l >> r >> d;
+			l--,r--;
+			// [l,r] + d  -> l += d   r + 1 -= d
+			seg.set(l,{seg.get(l).s + d,seg.get(l).s + d});
+			if (r + 1 < n)
+				seg.set(r + 1,{seg.get(r + 1).s - d,seg.get(r + 1).s - d});
+		}else {
+			int l,r; cin >> l >> r;
+			l--,r--;
+			//区间查询[l,r],转换为 求和[0,l] 求gcd()
+			int s = seg.prod(0,l + 1).s;
+			if (l + 1 <= r) {
+				int g = seg.prod(l + 1,r + 1).g;
+				cout << abs(gcd(s,g)) << endl;
+			}else {
+				cout << abs(s) << endl;
+			}
+
+		}
+	}
+
+}
+signed main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int T = 1;//cin >> T;
+    while(T--){
+        solve();
+    }
+    
+    return 0;
+}

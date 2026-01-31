@@ -1,8 +1,28 @@
-//
-// Created by 1 on 2026/1/4.
-//
+//  Luogu contest  P3374 【模板】树状数组 1
+//  Created at 16.01.2026 22:45:32 in file P3374__1.cpp
+//  By zfq
 #include <bits/stdc++.h>
+// #include <bits/extc++.h>
+#define LIMIT 22
+#define inf 0x3f3f3f3f3f3f
+#define endl '\n'
+
+#define int long long
 using namespace std;
+//using namespace __gnu_pbds;
+//using ordered_set = tree<int, null_type, less<>, rb_tree_tag, tree_order_statistics_node_update>;
+
+using pii = pair<int,int>;
+using v2d = vector<vector<int>>;
+const double eps = 1e-7;
+int dx[] =  {0,0,1,-1};
+int dy[] = {1,-1,0,0};
+const int MOD = 1e9 + 7;
+const int N = 1e5 + 5;
+const int M = 1e5 + 7;
+/*
+    
+*/
 // indexed-0 ,左闭右开区间[l,r)
 namespace atcoder {
 	int ceil_pow2(int n) {
@@ -114,37 +134,34 @@ namespace atcoder {
 		void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
 	};
 
-}
+}  // namespace atcoder
 using namespace atcoder;
-int op(int a, int b) {
-	return max(a,b);
+auto op(int a,int b) {
+	return a + b;
 }
-int e() {
-	return 0;
+auto e() {
+	return 0ll;
 }
-class Solution {
-public:
-	vector<bool> getResults(vector<vector<int>>& queries) {
-        int mx = 0;
-		for (auto &q: queries) mx = max(mx, q[1]);
-		segtree<int, op, e> seg(mx+1);
-		seg.set(mx,mx);
-		set<int> st;st.insert(0),st.insert(mx);
-		vector<bool> res;
-		for (auto &q: queries) {
-			int op = q[0];
-			int cur = q[1];
-			int pre = *prev(st.lower_bound(cur));
-			if (op == 1) {
-				int nxt = *st.lower_bound(cur);
-				seg.set(cur,cur - pre);
-				seg.set(nxt,nxt - cur);
-			}else {
-				//两部分  [0,pre]可以直接查，[pre,cur]
-				int v = max(seg.prod(0,pre+1),cur - pre);
-				res.push_back(v >= q[2]);
-			}
+void solve(){
+    int n,m; cin >> n >> m;
+	vector<int> arr(n);
+	for (int i = 0; i < n; i++) cin >> arr[i];
+	segtree<int,op,e> seg(arr);
+	while (m--) {
+		int op,x,y;cin >> op >> x >> y;
+		if (op == 1) {
+			seg.set(x - 1,seg.get(x - 1) + y);
+		} else {
+			cout << seg.prod(x - 1,y) << endl;
 		}
-		return res;
 	}
-};
+}
+signed main() {
+    ios::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    int T = 1;//cin >> T;
+    while(T--){
+        solve();
+    }
+    
+    return 0;
+}

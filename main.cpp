@@ -1,146 +1,155 @@
+//
+// Created by 1 on 2026/1/4.
+//
 #include <bits/stdc++.h>
 using namespace std;
+// indexed-0 ,左闭右开区间[l,r)
+namespace atcoder {
+	int ceil_pow2(int n) {
+		int x = 0;
+		while ((1U << x) < (unsigned int)(n)) x++;
+		return x;
+	}
+	template <class S, S(*op)(S, S), S(*e)()> struct segtree {
+	public:
+		segtree() : segtree(0) {}
+		explicit segtree(int n) : segtree(std::vector<S>(n, e())) {}
+		explicit segtree(const std::vector<S>& v) : _n((int)(v.size())) {
+			log = ceil_pow2(_n);
+			size = 1 << log;
+			d = std::vector<S>(2 * size, e());
+			for (int i = 0; i < _n; i++) d[size + i] = v[i];
+			for (int i = size - 1; i >= 1; i--) {
+				update(i);
+			}
+		}
 
-template <typename AnsType>
-class ModifyMoAlgorithm {
-public:
-    struct Query {
-        int l, r, time, id;
-        int param;  // ✅ 添加额外参数字段
-    };
+		void set(int p, S x) {
+			assert(0 <= p && p < _n);
+			p += size;
+			d[p] = x;
+			for (int i = 1; i <= log; i++) update(p >> i);
+		}
 
-    struct Modify {
-        int pos, oldVal, newVal;
-    };
+		S get(int p) const {
+			assert(0 <= p && p < _n);
+			return d[p + size];
+		}
 
-    ModifyMoAlgorithm(int n, vector<int>& arr) : n(n), arr(arr) {
-        blockSize = max(1, (int)pow(n, 2.0/3.0));
-    }
+		S prod(int l, int r) const {
+			assert(0 <= l && l <= r && r <= _n);
+			S sml = e(), smr = e();
+			l += size;
+			r += size;
 
-    void addQuery(int l, int r, int param = 0) {
-        queries.push_back({l, r, (int)modifies.size(), (int)queries.size(), param});
-    }
+			while (l < r) {
+				if (l & 1) sml = op(sml, d[l++]);
+				if (r & 1) smr = op(d[--r], smr);
+				l >>= 1;
+				r >>= 1;
+			}
+			return op(sml, smr);
+		}
 
-    void addModify(int pos, int newVal) {
-        modifies.push_back({pos, arr[pos], newVal});
-    }
+		S all_prod() const { return d[1]; }
 
-    template <typename Add, typename Remove, typename GetAns>
-    vector<AnsType> solve(Add add, Remove remove, GetAns getAns) {
-        vector<AnsType> ans(queries.size());
+		template <bool(*f)(S)> int max_right(int l) const {
+			return max_right(l, [](S x) { return f(x); });
+		}
+		template <class F> int max_right(int l, F f) const {
+			assert(0 <= l && l <= _n);
+			assert(f(e()));
+			if (l == _n) return _n;
+			l += size;
+			S sm = e();
+			do {
+				while (l % 2 == 0) l >>= 1;
+				if (!f(op(sm, d[l]))) {
+					while (l < size) {
+						l = (2 * l);
+						if (f(op(sm, d[l]))) {
+							sm = op(sm, d[l]);
+							l++;
+						}
+					}
+					return l - size;
+				}
+				sm = op(sm, d[l]);
+				l++;
+			} while ((l & -l) != l);
+			return _n;
+		}
 
-        sort(queries.begin(), queries.end(), [&](const Query& a, const Query& b) {
-            int blockA_L = a.l / blockSize;
-            int blockB_L = b.l / blockSize;
-            int blockA_R = a.r / blockSize;
-            int blockB_R = b.r / blockSize;
+		template <bool(*f)(S)> int min_left(int r) const {
+			return min_left(r, [](S x) { return f(x); });
+		}
+		template <class F> int min_left(int r, F f) const {
+			assert(0 <= r && r <= _n);
+			assert(f(e()));
+			if (r == 0) return 0;
+			r += size;
+			S sm = e();
+			do {
+				r--;
+				while (r > 1 && (r % 2)) r >>= 1;
+				if (!f(op(d[r], sm))) {
+					while (r < size) {
+						r = (2 * r + 1);
+						if (f(op(d[r], sm))) {
+							sm = op(d[r], sm);
+							r--;
+						}
+					}
+					return r + 1 - size;
+				}
+				sm = op(d[r], sm);
+			} while ((r & -r) != r);
+			return 0;
+		}
 
-            if (blockA_L != blockB_L) return blockA_L < blockB_L;
-            if (blockA_R != blockB_R) return blockA_R < blockB_R;
-            return a.time < b.time;
-        });
+	private:
+		int _n, size, log;
+		std::vector<S> d;
 
-        int curL = 0, curR = -1, curTime = 0;
+		void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
+	};
 
-        for (const auto& query : queries) {
-            int L = query.l, R = query.r, T = query.time, id = query.id;
-
-            // 处理修改
-            while (curTime < T) {
-                const auto& mod = modifies[curTime];
-                if (curL <= mod.pos && mod.pos <= curR) {
-                    remove(mod.pos);
-                }
-                arr[mod.pos] = mod.newVal;
-                if (curL <= mod.pos && mod.pos <= curR) {
-                    add(mod.pos);
-                }
-                curTime++;
-            }
-
-            while (curTime > T) {
-                curTime--;
-                const auto& mod = modifies[curTime];
-                if (curL <= mod.pos && mod.pos <= curR) {
-                    remove(mod.pos);
-                }
-                arr[mod.pos] = mod.oldVal;
-                if (curL <= mod.pos && mod.pos <= curR) {
-                    add(mod.pos);
-                }
-            }
-
-            // 移动区间
-            while (curR < R) add(++curR);
-            while (curR > R) remove(curR--);
-            while (curL < L) remove(curL++);
-            while (curL > L) add(--curL);
-
-            ans[id] = getAns(query.param);  // ✅ 传递参数
-        }
-
-        return ans;
-    }
-
-private:
-    int n, blockSize;
-    vector<int>& arr;
-    vector<Query> queries;
-    vector<Modify> modifies;
-};
-
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(0);
-
-    int n, m;
-    cin >> n >> m;
-
-    vector<int> a(n);
-    for (int i = 0; i < n; i++) {
-        cin >> a[i];
-    }
-
-    ModifyMoAlgorithm<int> mo(n, a);
-
-    for (int i = 0; i < m; i++) {
-        char op;
-        cin >> op;
-
-        if (op == 'Q') {
-            int A, B, K;
-            cin >> A >> B >> K;
-            A--; B--;  // 转为 0-indexed
-            mo.addQuery(A, B, K);  // ✅ 传递 K 作为参数
-        } else {
-            int A, P;
-            cin >> A >> P;
-            A--;  // 转为 0-indexed
-            mo.addModify(A, P);
-        }
-    }
-
-    // 维护每种书的数量
-    const int MAXVAL = 100005;
-    vector<int> cnt(MAXVAL, 0);
-
-    auto add = [&](int pos) {
-        cnt[a[pos]]++;
-    };
-
-    auto remove = [&](int pos) {
-        cnt[a[pos]]--;
-    };
-
-    auto getAns = [&](int K) {  // ✅ 接收参数 K
-        return cnt[K];
-    };
-
-    auto ans = mo.solve(add, remove, getAns);
-
-    for (int x : ans) {
-        cout << x << "\n";
-    }
-
-    return 0;
 }
+using namespace atcoder;
+int op(int a, int b) {
+	return max(a,b);
+}
+int e() {
+	return 0;
+}
+class Solution {
+public:
+	vector<bool> getResults(vector<vector<int>>& queries) {
+        int mx = 0;
+		for (auto &q: queries) mx = max(mx, q[1]);
+		segtree<int, op, e> seg(mx+1);
+		seg.set(mx,mx);
+		set<int> st;st.insert(0),st.insert(mx);
+		vector<bool> res;
+		for (auto &q: queries) {
+			int op = q[0];
+			int cur = q[1];
+			int pre = *prev(st.lower_bound(cur));
+			if (op == 1) {
+				int nxt = *st.lower_bound(cur);
+				seg.set(cur,cur - pre);
+				seg.set(nxt,nxt - cur);
+			}else {
+				//两部分  [0,pre]可以直接查，[pre,cur]
+				int v = max(seg.prod(0,pre+1),cur - pre);
+				res.push_back(v >= q[2]);
+			}
+		}
+		return res;
+	}
+};
+signed main(){
+	Solution sol;
+	vector<vector<int>> queries =  {{1,2},{2,3,3},{2,3,1},{2,2,2}};
+	sol.getResults(queries);
+};
