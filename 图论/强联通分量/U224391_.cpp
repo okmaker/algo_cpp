@@ -44,7 +44,7 @@ void solve(){
                 low[cur] = min(low[cur],dfn[nxt]);
             }
         }
-        if (low[cur] == dfn[cur]) {
+        if (low[cur] == dfn[cur]) { 
             int v;sccG.emplace_back();
             do {
                 v = stk.top();stk.pop();
